@@ -321,6 +321,7 @@ uint8_t PhaseSwitcher::get_phases_for_power(uint16_t available_charging_power)
     if (debug){
         logger.printfln("  Phase switcher: get_phases_for_power w/ available_charging_power %d", available_charging_power);
         logger.printfln("  Phase switcher: get_phases_for_power w/ MIN_POWER_ONE_PHASE %d, MIN_POWER_TWO_PHASES %d, MIN_POWER_THREE_PHASES %d", MIN_POWER_ONE_PHASE, MIN_POWER_TWO_PHASES, MIN_POWER_THREE_PHASES);
+        logger.printfln("  Phase switcher: get_phases_for_power w/ MAX_POWER_ONE_PHASE %d, MAX_POWER_TWO_PHASES %d", MAX_POWER_ONE_PHASE, MAX_POWER_TWO_PHASES);
         logger.printfln("  Phase switcher: get_phases_for_power w/ operating_mode %d", operating_mode);
     }    
     switch(operating_mode){
@@ -350,12 +351,24 @@ uint8_t PhaseSwitcher::get_phases_for_power(uint16_t available_charging_power)
 
         case one_two_phases_dynamic:
             if (debug) logger.printfln("    Phase switcher: get_phases_for_power one/two phases dynamic");
-            if (available_charging_power >= MIN_POWER_TWO_PHASES){
-                return 2;
-            } else if (available_charging_power >= MIN_POWER_ONE_PHASE){
-                return 1;
+            // Phasenwechsel nach Möglichkeit vermeiden
+            // Wenn wir auf zwei Phasen laufen
+            if (requested_phases == 2) {
+                if (available_charging_power >= MIN_POWER_TWO_PHASES) {
+                    return 2;
+                } else if(available_charging_power >= MIN_POWER_ONE_PHASE) {
+                    return 1;
+                } else {
+                    return 0;
+                }
             } else {
-                return 0;
+                if (available_charging_power >= MAX_POWER_ONE_PHASE){
+                    return 2;
+                } else if (available_charging_power >= MIN_POWER_ONE_PHASE){
+                    return 1;
+                } else {
+                    return 0;
+                }
             }
 
         case one_three_phases_dynamic:
